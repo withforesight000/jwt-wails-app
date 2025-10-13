@@ -1,0 +1,11 @@
+{
+  "version": "2",
+  "name": "jwt-wails-app",
+  "outputfilename": "JWTInspector",
+  "frontend:dir": "frontend",
+  "frontend:install": "pnpm install",
+  "frontend:build": "pnpm run build",
+  "frontend:dev:install": "pnpm install",
+  "frontend:dev:watcher": "pnpm run dev",
+  "frontend:dev:serverUrl": "http://localhost:3000"
+}

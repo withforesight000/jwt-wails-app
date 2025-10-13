@@ -1,0 +1,37 @@
+# Node & Next.js
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/.vercel
+/frontend/.cache/
+
+# pnpm & lock files
+/frontend/pnpm-lock.yaml
+/frontend/yarn.lock
+/frontend/package-lock.json
+
+# IDE / Editor
+.vscode/
+.idea/
+.DS_Store
+
+# OS Metadata
+Thumbs.db
+desktop.ini
+
+# Go artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+vendor/
+
+# Wails build artifacts
+/build/
+debug/
+
+# Environment files
+.env*
+.env.local
