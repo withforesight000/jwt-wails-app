@@ -1,52 +1,42 @@
-# jwt-wails-app
+# jwt-wails-app (JWT Inspector)
 
-このリポジトリのセットアップ手順をまとめています。主にローカルで開発・ビルドするためのコマンドを中心に記載します。
+JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). Enter a token, optionally attach a shared or public key, and review both the signature status and decoded data.
 
-## 概要
-Go + Wails を利用したデスクトップアプリケーション（JWT 関連機能を含む想定）です。フロントエンドは Node ベースのツールで管理されています。
+## Overview
+- Decode JWT headers and claims with automatic extraction of `alg`, `iat`, `nbf`, and `exp`
+- Verify signatures when a key is supplied (supports HS*, RS*, PS*, ES*, and EdDSA keys in PEM or DER form)
+- Go-powered verification logic exposed to a Next.js/React UI via Wails v2
 
-## 前提条件
-- Go (推奨: 1.25.0)
-- Node.js (推奨: 24.6.0)
-# jwt-wails-app
+## Prerequisites
+- macOS + zsh (adjust shell configuration steps if you use another shell)
+- [goenv](https://github.com/go-nv/goenv) for Go version management
+- [nodenv](https://github.com/nodenv/nodenv) for Node.js version management
+- Go 1.23.0 (matches `go.mod`)
+- Node.js 24.6.0
+- Wails CLI v2
+- pnpm 10.15 (installed via Corepack or npm)
 
-このリポジトリのローカル開発・ビルド手順をまとめています。ここでは macOS（zsh）を想定し、Go のバージョン管理に `goenv`、Node.js のバージョン管理に `nodenv` を使う前提で手順を記載します。
+> Using goenv/nodenv is optional, but they keep local versions consistent with the project files.
 
-## 概要
-Go + Wails を使ったデスクトップアプリケーション（JWT 関連の機能を含む想定）です。フロントエンドは `frontend/` 配下の Node ベースのツール（Next.js 等）で管理されています。
-
-## 前提（この README の前提）
-- macOS + zsh
-- goenv（Go のバージョン管理）
-- nodenv（Node.js のバージョン管理）
-- package manager（npm / yarn / pnpm のいずれか）
-- Wails CLI（v2）
-
-必須ではありませんが、環境依存の差を減らすために上記のバージョン管理ツールを使うことを推奨します。
-
-## 目次
-- インストール: goenv / nodenv
-- Go / Node のセットアップ
-- Wails CLI のインストール
-- プロジェクトのセットアップと実行
-- よく使うコマンド
-- トラブルシューティング
+## Table of Contents
+1. Install goenv and nodenv
+2. Install Go and Node.js
+3. Install the Wails CLI
+4. Set up the project
+5. Common commands
+6. Troubleshooting
 
 ---
 
-## 1) goenv と nodenv のインストール（macOS + Homebrew）
-Homebrew が入っていることを前提とします。入っていない場合は https://brew.sh を参照してください。
+## 1. Install goenv and nodenv (macOS + Homebrew)
+Homebrew must be installed (`https://brew.sh/`).
 
 ```bash
-# goenv と nodenv をインストール
 brew update
-brew install goenv nodenv
-
-# nodenv のプラグイン（npm や node-build を使うため）
-brew install node-build
+brew install goenv nodenv node-build
 ```
 
-zsh をお使いの場合、`~/.zshrc` に以下を追加して環境を有効化してください（既に追加されている場合は飛ばして構いません）。
+Enable the shims by updating `~/.zshrc` (skip if already configured):
 
 ```bash
 # goenv
@@ -60,37 +50,37 @@ export PATH="$NODENV_ROOT/bin:$PATH"
 eval "$(nodenv init -)"
 ```
 
-設定を反映させるため、ターミナルを再起動するか次を実行します:
+Reload your shell:
 
 ```bash
 source ~/.zshrc
 ```
 
-## 2) Go と Node のインストール（プロジェクトで推奨されるバージョンを使う）
-このリポジトリではローカルで使う Go と Node のバージョンを `.go-version` と `.node-version` に書いておくのを推奨します（なければ作成してください）。例:
+## 2. Install Go and Node.js
+`.go-version` and `.node-version` keep the required versions. Ensure they match `go.mod` and `frontend/package.json`:
 
 ```text
 # .go-version
-1.25.0
+1.23.0
 
 # .node-version
 24.6.0
 ```
 
-指定したバージョンをインストールして切り替えます:
+Install and activate the toolchains:
 
 ```bash
-# Go をインストールして有効化
-goenv install 1.25.0
-goenv global 1.25.0
+# Go
+goenv install 1.23.0
+goenv global 1.23.0
 
-# Node をインストールして有効化
+# Node.js
 nodenv install 24.6.0
 nodenv global 24.6.0
 nodenv rehash
 ```
 
-インストールが成功していることを確認:
+Check the versions:
 
 ```bash
 go version
@@ -98,63 +88,68 @@ node -v
 npm -v
 ```
 
-## 3) Wails CLI のインストール
-Wails CLI は Go のツールとして提供されています（v2 推奨）。`goenv` で設定した Go 環境下でインストールしてください。
+Enable pnpm via Corepack (preferred) or install it globally:
+
+```bash
+corepack enable pnpm
+corepack prepare pnpm@10.15.0 --activate
+# or: npm install -g pnpm@10.15.0
+```
+
+## 3. Install the Wails CLI
+Install Wails v2 using the configured Go environment.
 
 ```bash
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-# $GOPATH/bin または $HOME/go/bin を PATH に含める必要があります
-export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-（`~/.zshrc` に PATH 追記しておくと恒久的です）
+Ensure the Go bin directory is on your `PATH` (add this to `~/.zshrc` if necessary):
 
-## 4) プロジェクトのセットアップ（ローカル）
-1. リポジトリをクローンまたはプロジェクトルートに移動
+```bash
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+Validate the installation:
+
+```bash
+wails doctor
+```
+
+## 4. Set up the project
+Clone the repository (or move into the existing checkout):
 
 ```bash
 git clone <repo-url>
 cd jwt-wails-app
 ```
 
-2. 環境変数を準備（必要に応じて）
+Optional: configure environment variables. Create a `.env` file if your setup needs secrets such as JWT keys or database credentials.
 
-```bash
-# .env.example があればコピー
-cp .env.example .env
-# .env に JWT シークレットや DB の接続情報などを設定
-```
-
-3. Go モジュールを取得
+Install backend dependencies:
 
 ```bash
 go mod download
 ```
 
-4. フロントエンド依存をインストール
-
-フロントエンドは `frontend/` にあります。まずはそのディレクトリへ移動して依存をインストールします。
+Install frontend dependencies (pnpm is defined in `frontend/package.json` and `wails.json`):
 
 ```bash
 cd frontend
-npm install -g pnpm@latest-10
 pnpm install
-cd -
+cd ..
 ```
 
-（プロジェクトの package manager をローカルで固定したい場合は `package-lock.json` や `pnpm-lock.yaml` を参照してください）
+> The Wails CLI also runs `pnpm install` automatically via `frontend:install`, but running it once manually ensures the lockfile is respected before your first build.
 
-## 5) 開発サーバ起動とビルド
+## 5. Common commands
+- Development mode: `wails dev`
+- Production build: `wails build` (outputs binaries under `build/bin/`)
+- Frontend-only dev server (if needed): `cd frontend && pnpm run dev`
+- Update Go dependencies: `go get -u ./... && go mod tidy`
 
-- 開発モード（ホットリロード）:
-
-```bash
-wails dev
-```
-
-- リリースビルド:
-
-```bash
-wails build
-```
+## 6. Troubleshooting
+- Run `wails doctor` to diagnose environment issues.
+- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.6.0.
+- For Go module errors, try `go clean -modcache` followed by `go mod download`.
+- Ensure `.go-version`, `.node-version`, and the values in this README stay in sync after upgrades.
+- Hot reload doesn't work. To work around, you manually reload the UI from the menu by right-clicking.
