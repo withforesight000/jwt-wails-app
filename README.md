@@ -11,7 +11,7 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 - macOS + zsh (adjust shell configuration steps if you use another shell)
 - [goenv](https://github.com/go-nv/goenv) for Go version management
 - [nodenv](https://github.com/nodenv/nodenv) for Node.js version management
-- Go 1.23.0 (matches `go.mod`)
+- Go 1.25.0 (matches `go.mod`)
 - Node.js 24.6.0
 - Wails CLI v2
 - pnpm 10.15 (installed via Corepack or npm)
@@ -61,7 +61,7 @@ source ~/.zshrc
 
 ```text
 # .go-version
-1.23.0
+1.25.0
 
 # .node-version
 24.6.0
@@ -71,8 +71,8 @@ Install and activate the toolchains:
 
 ```bash
 # Go
-goenv install 1.23.0
-goenv global 1.23.0
+goenv install 1.25.0
+goenv global 1.25.0
 
 # Node.js
 nodenv install 24.6.0
