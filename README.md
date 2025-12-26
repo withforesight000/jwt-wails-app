@@ -153,3 +153,7 @@ cd ..
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
 - Ensure `.go-version`, `.node-version`, and the values in this README stay in sync after upgrades.
 - Hot reload doesn't work. To work around, you manually reload the UI from the menu by right-clicking.
+
+## Testing
+- **Go unit tests:** `go test ./...`
+- **Frontend E2E (Playwright):** `cd frontend && pnpm run test:e2e` — this spins up the Next dev server and runs Playwright tests that mock the Wails runtime to exercise the JWT Inspector UI.

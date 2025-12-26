@@ -34,7 +34,9 @@
     "components",
     "lib",
     "out/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "tests",
+    "out/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

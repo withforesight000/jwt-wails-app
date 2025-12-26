@@ -5,6 +5,9 @@
 /frontend/.vercel
 /frontend/.cache/
 
+# Playwright artifacts
+/frontend/playwright-report/
+
 # pnpm & lock files
 /frontend/pnpm-lock.yaml
 /frontend/yarn.lock
