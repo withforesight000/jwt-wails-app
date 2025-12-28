@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { 
+  createContext, 
+  useContext, 
+  useState, 
+  useEffect, 
+  useCallback, 
+  useMemo, 
+  type ReactNode 
+} from 'react';
 import type { Locale, I18nContext } from './types';
 import { translations, type TranslationKey } from './translations';
 import { detectLocale, saveLocale } from './detect';
@@ -11,26 +19,35 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
   const [mounted, setMounted] = useState(false);
 
-  // Initialize locale on mount
+  // Initialize locale on mount from localStorage or OS settings
   useEffect(() => {
-    setLocaleState(detectLocale());
+    const detectedLocale = detectLocale();
+    setLocaleState(detectedLocale);
     setMounted(true);
   }, []);
 
-  const setLocale = (newLocale: Locale) => {
+  // Memoized function to update locale and persist to localStorage
+  const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
     saveLocale(newLocale);
     
-    // Update html lang attribute
+    // Update html lang attribute for accessibility
     if (typeof document !== 'undefined') {
       document.documentElement.lang = newLocale;
     }
-  };
+  }, []);
 
-  const t = (key: string): string => {
+  // Memoized translation function
+  const t = useCallback((key: string): string => {
     const translationKey = key as TranslationKey;
     return translations[locale][translationKey] || key;
-  };
+  }, [locale]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo<I18nContext>(
+    () => ({ locale, setLocale, t }),
+    [locale, setLocale, t]
+  );
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
@@ -38,7 +55,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <I18nReactContext.Provider value={{ locale, setLocale, t }}>
+    <I18nReactContext.Provider value={contextValue}>
       {children}
     </I18nReactContext.Provider>
   );
