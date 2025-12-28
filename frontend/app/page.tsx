@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { VerifyAndDecodeJWT } from '@/wailsjs/go/app/App';
 
-// shadcn/ui コンポーネントを使用
+// UI components
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
