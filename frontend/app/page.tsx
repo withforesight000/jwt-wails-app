@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X, File as FileIcon } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 function b64urlToString(b64url: string): string {
   try {
@@ -27,6 +29,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default function Page() {
+  const { t } = useI18n();
   const [token, setToken] = useState('');
   const [keyFile, setKeyFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -76,28 +79,31 @@ export default function Page() {
 
   return (
     <main className="mx-auto max-w-6xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">JWT Inspector</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold">{t('app.title')}</h1>
+        <LanguageSwitcher />
+      </div>
 
       <Card>
         <CardHeader className="pb-0">
-          <CardTitle>入力</CardTitle>
+          <CardTitle>{t('input.title')}</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {/* 入力 2 カラム（左: JWT / 右: 鍵ファイル） */}
           <div className="grid gap-6 md:grid-cols-2 items-start">
             {/* 左カラム: JWT 入力（ボタンをここに入れて縦の間延びを抑える） */}
             <div className="grid gap-2">
-              <Label htmlFor="jwt">JWT</Label>
-              <Textarea id="jwt" placeholder="eyJhbGciOi..." value={token} onChange={(e) => setToken(e.target.value)} />
-              <p className="text-xs text-zinc-400">検出された alg: <span className="font-mono">{alg || '-'}</span></p>
+              <Label htmlFor="jwt">{t('input.jwt.label')}</Label>
+              <Textarea id="jwt" placeholder={t('input.jwt.placeholder')} value={token} onChange={(e) => setToken(e.target.value)} />
+              <p className="text-xs text-zinc-400">{t('input.alg.detected')} <span className="font-mono">{alg || '-'}</span></p>
 
               {/* アクション行: 検証 / クリア（左カラムに内包） */}
               <div className="mt-2 flex items-center gap-3">
                 <Button onClick={handleVerify} disabled={busy || !token}>
-                  {busy ? '検証中…' : '検証する'}
+                  {busy ? t('input.verify.loading') : t('input.verify.button')}
                 </Button>
-                <Button type="button" variant="secondary" onClick={handleClear} aria-label="クリア">
-                  クリア
+                <Button type="button" variant="secondary" onClick={handleClear} aria-label={t('input.clear.aria')}>
+                  {t('input.clear.button')}
                 </Button>
                 {error && <div className="ml-2 text-sm text-red-500">{error}</div>}
               </div>
@@ -105,7 +111,7 @@ export default function Page() {
 
             {/* 右カラム: 鍵ファイル（クリックで選択のみ／ドラッグ&ドロップは無効化） */}
             <div className="grid gap-2">
-              <Label>鍵ファイル（任意: 共有鍵/公開鍵/秘密鍵）</Label>
+              <Label>{t('keyfile.label')}</Label>
 
               {/* 実体の input は隠して制御（shadcn の Input を流用） */}
               <Input
@@ -119,12 +125,12 @@ export default function Page() {
 
               {/* シンプルな選択ボックス（クリックでファイルを選択） */}
               <div className="rounded-lg border border-zinc-700 p-5 text-center">
-                <div className="text-sm text-zinc-600 mb-3">ファイル選択ボタンから指定してください</div>
+                <div className="text-sm text-zinc-600 mb-3">{t('keyfile.instruction')}</div>
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                  ファイルを選択
+                  {t('keyfile.select.button')}
                 </Button>
                 <div className="mt-3 text-xs text-zinc-500">
-                  HS* は生バイト（共有鍵）。RS/PS/ES/EdDSA は <strong>PEM と生 DER の両方</strong>（公開鍵/証明書/秘密鍵）をサポート。
+                  {t('keyfile.format.hint')}
                 </div>
               </div>
 
@@ -139,7 +145,7 @@ export default function Page() {
                     variant="ghost"
                     size="icon"
                     className="ml-auto h-7 w-7"
-                    aria-label="選択をクリア"
+                    aria-label={t('keyfile.clear.aria')}
                     onClick={() => { setKeyFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                   >
                     <X className="h-4 w-4" />
@@ -154,24 +160,24 @@ export default function Page() {
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>結果</CardTitle>
+            <CardTitle>{t('result.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             {!result ? (
-              <p className="text-sm text-zinc-500">まだ検証していません。</p>
+              <p className="text-sm text-zinc-500">{t('result.not.verified')}</p>
             ) : (
               <div className="space-y-2 text-sm">
                 <div>
-                  署名検証: {result.valid ? (
-                    <span className="text-green-600">OK</span>
+                  {t('result.signature')}: {result.valid ? (
+                    <span className="text-green-600">{t('result.signature.ok')}</span>
                   ) : (
-                    <span className="text-red-600">NG</span>
+                    <span className="text-red-600">{t('result.signature.ng')}</span>
                   )}
                 </div>
                 {result.algorithm && (
                   <div>alg: <span className="font-mono">{result.algorithm}</span></div>
                 )}
-                {result.error && <div className="text-red-600">エラー: {result.error}</div>}
+                {result.error && <div className="text-red-600">{t('result.error')}: {result.error}</div>}
                 {Array.isArray(result.warnings) && result.warnings.length > 0 && (
                   <ul className="list-disc ml-5 text-amber-600">
                     {result.warnings.map((w: string, i: number) => (
@@ -191,7 +197,7 @@ export default function Page() {
 
         <Card>
           <CardHeader>
-            <CardTitle>ヘッダ</CardTitle>
+            <CardTitle>{t('header.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <pre className="text-xs whitespace-pre-wrap overflow-auto">{result ? JSON.stringify(result.header, null, 2) : '-'}</pre>
@@ -201,7 +207,7 @@ export default function Page() {
 
       <Card>
         <CardHeader>
-          <CardTitle>ペイロード</CardTitle>
+          <CardTitle>{t('payload.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <pre className="text-xs whitespace-pre-wrap overflow-auto">{result ? JSON.stringify(result.claims, null, 2) : '-'}</pre>
