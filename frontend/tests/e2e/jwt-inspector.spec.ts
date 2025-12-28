@@ -132,6 +132,9 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.addInitScript(() => {
+    // Set locale to Japanese for consistent test behavior
+    localStorage.setItem('jwt-inspector-locale', 'ja');
+    
     window.go = {
       app: {
         App: {
