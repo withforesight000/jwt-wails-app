@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useRef, useReducer, useCallback } from 'react';
 import { VerifyAndDecodeJWT } from '@/wailsjs/go/app/App';
 
 // UI components
@@ -12,6 +12,7 @@ import { X, File as FileIcon } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
+// Helper functions
 function b64urlToString(b64url: string): string {
   try {
     const pad = b64url.length % 4 === 2 ? '==' : b64url.length % 4 === 3 ? '=' : '';
@@ -28,26 +29,83 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }
 
+// State management types
+interface JWTInspectorState {
+  token: string;
+  keyFile: File | null;
+  busy: boolean;
+  result: any | null;
+  error: string | null;
+}
+
+type JWTInspectorAction =
+  | { type: 'SET_TOKEN'; payload: string }
+  | { type: 'SET_KEY_FILE'; payload: File | null }
+  | { type: 'VERIFY_START' }
+  | { type: 'VERIFY_SUCCESS'; payload: any }
+  | { type: 'VERIFY_ERROR'; payload: string }
+  | { type: 'CLEAR_ALL' };
+
+// Reducer for state management
+function jwtInspectorReducer(
+  state: JWTInspectorState,
+  action: JWTInspectorAction
+): JWTInspectorState {
+  switch (action.type) {
+    case 'SET_TOKEN':
+      return { ...state, token: action.payload };
+    
+    case 'SET_KEY_FILE':
+      return { ...state, keyFile: action.payload };
+    
+    case 'VERIFY_START':
+      return { ...state, busy: true, error: null };
+    
+    case 'VERIFY_SUCCESS':
+      return { ...state, busy: false, result: action.payload, error: null };
+    
+    case 'VERIFY_ERROR':
+      return { ...state, busy: false, error: action.payload };
+    
+    case 'CLEAR_ALL':
+      return {
+        token: '',
+        keyFile: null,
+        busy: false,
+        result: null,
+        error: null,
+      };
+    
+    default:
+      return state;
+  }
+}
+
+// Initial state
+const initialState: JWTInspectorState = {
+  token: '',
+  keyFile: null,
+  busy: false,
+  result: null,
+  error: null,
+};
+
 export default function Page() {
   const { t } = useI18n();
-  const [token, setToken] = useState('');
-  const [keyFile, setKeyFile] = useState<File | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(jwtInspectorReducer, initialState);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Extract algorithm from JWT token header
   const alg = useMemo(() => {
     try {
-      const [h] = token.split('.');
+      const [h] = state.token.split('.');
       if (!h) return '';
       const hdr = JSON.parse(b64urlToString(h));
       return hdr.alg || '';
     } catch {
       return '';
     }
-  }, [token]);
+  }, [state.token]);
 
   // Convert File to byte array for verification
   const readKeyBytes = useCallback(async (file: File | null): Promise<number[]> => {
@@ -58,25 +116,19 @@ export default function Page() {
 
   // Handle JWT verification
   const handleVerify = useCallback(async () => {
-    setBusy(true);
-    setError(null);
+    dispatch({ type: 'VERIFY_START' });
     try {
-      const keyBytes = await readKeyBytes(keyFile);
-      const res = await VerifyAndDecodeJWT(token, keyBytes);
-      setResult(res);
+      const keyBytes = await readKeyBytes(state.keyFile);
+      const res = await VerifyAndDecodeJWT(state.token, keyBytes);
+      dispatch({ type: 'VERIFY_SUCCESS', payload: res });
     } catch (e: any) {
-      setError(e?.message || String(e));
-    } finally {
-      setBusy(false);
+      dispatch({ type: 'VERIFY_ERROR', payload: e?.message || String(e) });
     }
-  }, [token, keyFile, readKeyBytes]);
+  }, [state.token, state.keyFile, readKeyBytes]);
 
   // Clear all form data and results
   const handleClear = useCallback(() => {
-    setToken('');
-    setKeyFile(null);
-    setResult(null);
-    setError(null);
+    dispatch({ type: 'CLEAR_ALL' });
     // Reset file input to allow selecting the same file again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -85,17 +137,17 @@ export default function Page() {
 
   // Handle file selection from input
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeyFile(e.target.files?.[0] ?? null);
+    dispatch({ type: 'SET_KEY_FILE', payload: e.target.files?.[0] ?? null });
   }, []);
 
   // Handle token text change
   const handleTokenChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setToken(e.target.value);
+    dispatch({ type: 'SET_TOKEN', payload: e.target.value });
   }, []);
 
   // Remove selected file
   const handleRemoveFile = useCallback(() => {
-    setKeyFile(null);
+    dispatch({ type: 'SET_KEY_FILE', payload: null });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -126,7 +178,7 @@ export default function Page() {
               <Textarea 
                 id="jwt" 
                 placeholder={t('input.jwt.placeholder')} 
-                value={token} 
+                value={state.token} 
                 onChange={handleTokenChange} 
               />
               <p className="text-xs text-zinc-400">
@@ -135,8 +187,8 @@ export default function Page() {
 
               {/* Action buttons: Verify / Clear */}
               <div className="mt-2 flex items-center gap-3">
-                <Button onClick={handleVerify} disabled={busy || !token}>
-                  {busy ? t('input.verify.loading') : t('input.verify.button')}
+                <Button onClick={handleVerify} disabled={state.busy || !state.token}>
+                  {state.busy ? t('input.verify.loading') : t('input.verify.button')}
                 </Button>
                 <Button 
                   type="button" 
@@ -146,7 +198,7 @@ export default function Page() {
                 >
                   {t('input.clear.button')}
                 </Button>
-                {error && <div className="ml-2 text-sm text-red-500">{error}</div>}
+                {state.error && <div className="ml-2 text-sm text-red-500">{state.error}</div>}
               </div>
             </div>
 
@@ -176,11 +228,11 @@ export default function Page() {
               </div>
 
               {/* Selected file chip */}
-              {keyFile && (
+              {state.keyFile && (
                 <div className="flex items-center gap-2 rounded-md border border-zinc-700 bg-black/5 px-3 py-2 text-sm">
                   <FileIcon className="h-4 w-4" />
-                  <span className="truncate" title={keyFile.name}>{keyFile.name}</span>
-                  <span className="text-xs text-zinc-500">{formatBytes(keyFile.size)}</span>
+                  <span className="truncate" title={state.keyFile.name}>{state.keyFile.name}</span>
+                  <span className="text-xs text-zinc-500">{formatBytes(state.keyFile.size)}</span>
                   <Button
                     type="button"
                     variant="ghost"
@@ -204,31 +256,31 @@ export default function Page() {
             <CardTitle>{t('result.title')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {!result ? (
+            {!state.result ? (
               <p className="text-sm text-zinc-500">{t('result.not.verified')}</p>
             ) : (
               <div className="space-y-2 text-sm">
                 <div>
-                  {t('result.signature')}: {result.valid ? (
+                  {t('result.signature')}: {state.result.valid ? (
                     <span className="text-green-600">{t('result.signature.ok')}</span>
                   ) : (
                     <span className="text-red-600">{t('result.signature.ng')}</span>
                   )}
                 </div>
-                {result.algorithm && (
-                  <div>alg: <span className="font-mono">{result.algorithm}</span></div>
+                {state.result.algorithm && (
+                  <div>alg: <span className="font-mono">{state.result.algorithm}</span></div>
                 )}
-                {result.error && <div className="text-red-600">{t('result.error')}: {result.error}</div>}
-                {Array.isArray(result.warnings) && result.warnings.length > 0 && (
+                {state.result.error && <div className="text-red-600">{t('result.error')}: {state.result.error}</div>}
+                {Array.isArray(state.result.warnings) && state.result.warnings.length > 0 && (
                   <ul className="list-disc ml-5 text-amber-600">
-                    {result.warnings.map((w: string, i: number) => (
+                    {state.result.warnings.map((w: string, i: number) => (
                       <li key={i}>{w}</li>
                     ))}
                   </ul>
                 )}
-                {result.signature && (
+                {state.result.signature && (
                   <div className="text-xs text-zinc-500">
-                    sig: <span className="font-mono break-all">{result.signature}</span>
+                    sig: <span className="font-mono break-all">{state.result.signature}</span>
                   </div>
                 )}
               </div>
@@ -241,7 +293,7 @@ export default function Page() {
             <CardTitle>{t('header.title')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className="text-xs whitespace-pre-wrap overflow-auto">{result ? JSON.stringify(result.header, null, 2) : '-'}</pre>
+            <pre className="text-xs whitespace-pre-wrap overflow-auto">{state.result ? JSON.stringify(state.result.header, null, 2) : '-'}</pre>
           </CardContent>
         </Card>
       </div>
@@ -251,7 +303,7 @@ export default function Page() {
           <CardTitle>{t('payload.title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre className="text-xs whitespace-pre-wrap overflow-auto">{result ? JSON.stringify(result.claims, null, 2) : '-'}</pre>
+          <pre className="text-xs whitespace-pre-wrap overflow-auto">{state.result ? JSON.stringify(state.result.claims, null, 2) : '-'}</pre>
         </CardContent>
       </Card>
     </main>
