@@ -12,8 +12,8 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 - macOS + zsh (adjust shell configuration steps if you use another shell)
 - [goenv](https://github.com/go-nv/goenv) for Go version management
 - [nodenv](https://github.com/nodenv/nodenv) for Node.js version management
-- Go 1.25.0 (matches `go.mod`)
-- Node.js 24.6.0
+- Go 1.25.5 (matches `go.mod`)
+- Node.js 24.12.0
 - Wails CLI v2
 - pnpm 10.15 (installed via Corepack or npm)
 
@@ -62,22 +62,22 @@ source ~/.zshrc
 
 ```text
 # .go-version
-1.25.0
+1.25.5
 
 # .node-version
-24.6.0
+24.12.0
 ```
 
 Install and activate the toolchains:
 
 ```bash
 # Go
-goenv install 1.25.0
-goenv global 1.25.0
+goenv install 1.25.5
+goenv global 1.25.5
 
 # Node.js
-nodenv install 24.6.0
-nodenv global 24.6.0
+nodenv install 24.12.0
+nodenv global 24.12.0
 nodenv rehash
 ```
 
@@ -151,7 +151,7 @@ cd ..
 
 ## 6. Troubleshooting
 - Run `wails doctor` to diagnose environment issues.
-- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.6.0.
+- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.12.0.
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
 - Ensure `.go-version`, `.node-version`, and the values in this README stay in sync after upgrades.
 - Hot reload doesn't work. To work around, you manually reload the UI from the menu by right-clicking.
