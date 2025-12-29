@@ -1,6 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { I18nProvider } from '@/lib/i18n';
 
 export const metadata: Metadata = {

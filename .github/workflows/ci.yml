@@ -50,3 +50,6 @@ jobs:
       - name: Run Playwright E2E tests
         run: pnpm run test:e2e
         working-directory: frontend
+      - name: Run frontend linting
+        run: pnpm run lint
+        working-directory: frontend

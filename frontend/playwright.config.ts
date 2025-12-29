@@ -6,7 +6,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 0,
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: 'http://127.0.0.1:3000',
     headless: true,
     viewport: { width: 1280, height: 720 },
     actionTimeout: 10_000,
@@ -15,7 +15,7 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   webServer: {
     command: 'pnpm run dev',
-    url: 'http://127.0.0.1:4173',
+    url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

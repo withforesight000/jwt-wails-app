@@ -1,6 +1,7 @@
 'use client';
-import { useMemo, useRef, useReducer, useCallback } from 'react';
+import React, { useMemo, useRef, useReducer, useCallback } from 'react';
 import { VerifyAndDecodeJWT } from '@/wailsjs/go/app/App';
+import type { app } from '@/wailsjs/go/models';
 
 // UI components
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ interface JWTInspectorState {
   token: string;
   keyFile: File | null;
   busy: boolean;
-  result: any | null;
+  result: app.JWTResult | null;
   error: string | null;
 }
 
@@ -42,7 +43,7 @@ type JWTInspectorAction =
   | { type: 'SET_TOKEN'; payload: string }
   | { type: 'SET_KEY_FILE'; payload: File | null }
   | { type: 'VERIFY_START' }
-  | { type: 'VERIFY_SUCCESS'; payload: any }
+  | { type: 'VERIFY_SUCCESS'; payload: app.JWTResult }
   | { type: 'VERIFY_ERROR'; payload: string }
   | { type: 'CLEAR_ALL' };
 
@@ -54,19 +55,19 @@ function jwtInspectorReducer(
   switch (action.type) {
     case 'SET_TOKEN':
       return { ...state, token: action.payload };
-    
+
     case 'SET_KEY_FILE':
       return { ...state, keyFile: action.payload };
-    
+
     case 'VERIFY_START':
       return { ...state, busy: true, error: null };
-    
+
     case 'VERIFY_SUCCESS':
       return { ...state, busy: false, result: action.payload, error: null };
-    
+
     case 'VERIFY_ERROR':
       return { ...state, busy: false, error: action.payload };
-    
+
     case 'CLEAR_ALL':
       return {
         token: '',
@@ -75,7 +76,7 @@ function jwtInspectorReducer(
         result: null,
         error: null,
       };
-    
+
     default:
       return state;
   }
@@ -121,8 +122,9 @@ export default function Page() {
       const keyBytes = await readKeyBytes(state.keyFile);
       const res = await VerifyAndDecodeJWT(state.token, keyBytes);
       dispatch({ type: 'VERIFY_SUCCESS', payload: res });
-    } catch (e: any) {
-      dispatch({ type: 'VERIFY_ERROR', payload: e?.message || String(e) });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      dispatch({ type: 'VERIFY_ERROR', payload: message });
     }
   }, [state.token, state.keyFile, readKeyBytes]);
 
@@ -175,11 +177,11 @@ export default function Page() {
             {/* Left column: JWT input */}
             <div className="grid gap-2">
               <Label htmlFor="jwt">{t('input.jwt.label')}</Label>
-              <Textarea 
-                id="jwt" 
-                placeholder={t('input.jwt.placeholder')} 
-                value={state.token} 
-                onChange={handleTokenChange} 
+              <Textarea
+                id="jwt"
+                placeholder={t('input.jwt.placeholder')}
+                value={state.token}
+                onChange={handleTokenChange}
               />
               <p className="text-xs text-zinc-400">
                 {t('input.alg.detected')} <span className="font-mono">{alg || '-'}</span>
@@ -190,10 +192,10 @@ export default function Page() {
                 <Button onClick={handleVerify} disabled={state.busy || !state.token}>
                   {state.busy ? t('input.verify.loading') : t('input.verify.button')}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="secondary" 
-                  onClick={handleClear} 
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleClear}
                   aria-label={t('input.clear.aria')}
                 >
                   {t('input.clear.button')}

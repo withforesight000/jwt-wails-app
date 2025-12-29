@@ -1,13 +1,13 @@
 'use client';
 
-import { 
-  createContext, 
-  useContext, 
-  useState, 
-  useEffect, 
-  useCallback, 
-  useMemo, 
-  type ReactNode 
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useCallback,
+  useMemo,
+  useSyncExternalStore,
+  type ReactNode
 } from 'react';
 import type { Locale, I18nContext } from './types';
 import { translations, type TranslationKey } from './translations';
@@ -15,29 +15,67 @@ import { detectLocale, saveLocale } from './detect';
 
 const I18nReactContext = createContext<I18nContext | undefined>(undefined);
 
+const localeListeners = new Set<() => void>();
+let currentLocale: Locale = 'en';
+let hasClientLocaleInitialized = false;
+
+function setCurrentLocale(newLocale: Locale) {
+  if (currentLocale === newLocale) {
+    return;
+  }
+  currentLocale = newLocale;
+  for (const listener of localeListeners) {
+    listener();
+  }
+}
+
+function initLocaleOnClient() {
+  if (hasClientLocaleInitialized || typeof window === 'undefined') {
+    return;
+  }
+
+  hasClientLocaleInitialized = true;
+  const detectedLocale = detectLocale();
+  if (detectedLocale !== currentLocale) {
+    setCurrentLocale(detectedLocale);
+  }
+}
+
+function subscribeLocale(listener: () => void) {
+  localeListeners.add(listener);
+  initLocaleOnClient();
+  return () => {
+    localeListeners.delete(listener);
+  };
+}
+
+function getLocaleSnapshot() {
+  return currentLocale;
+}
+
+function getServerLocaleSnapshot(): Locale {
+  return 'en';
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en');
-  const [mounted, setMounted] = useState(false);
+  const locale = useSyncExternalStore<Locale>(
+    subscribeLocale,
+    getLocaleSnapshot,
+    getServerLocaleSnapshot,
+  );
 
-  // Initialize locale on mount from localStorage or OS settings
   useEffect(() => {
-    const detectedLocale = detectLocale();
-    setLocaleState(detectedLocale);
-    setMounted(true);
-  }, []);
-
-  // Memoized function to update locale and persist to localStorage
-  const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale);
-    saveLocale(newLocale);
-    
-    // Update html lang attribute for accessibility
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = newLocale;
+      document.documentElement.lang = locale;
     }
-  }, []);
+  }, [locale]);
 
   // Memoized translation function
+  const setLocale = useCallback((newLocale: Locale) => {
+    setCurrentLocale(newLocale);
+    saveLocale(newLocale);
+  }, []);
+
   const t = useCallback((key: string): string => {
     const translationKey = key as TranslationKey;
     return translations[locale][translationKey] || key;
@@ -48,11 +86,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     () => ({ locale, setLocale, t }),
     [locale, setLocale, t]
   );
-
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <I18nReactContext.Provider value={contextValue}>
