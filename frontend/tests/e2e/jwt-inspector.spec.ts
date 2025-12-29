@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { expect, test } from '@playwright/test';
 import { importPKCS8, importSPKI, SignJWT, jwtVerify } from 'jose';
 
-type AlgorithmCase = {
+interface AlgorithmCase {
   name: string;
   algorithm: string;
   signingKeyFile: string;
@@ -132,6 +132,9 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.addInitScript(() => {
+    // Set locale to Japanese for consistent test behavior
+    localStorage.setItem('jwt-inspector-locale', 'ja');
+    
     window.go = {
       app: {
         App: {
