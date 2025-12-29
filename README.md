@@ -6,6 +6,7 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 - Decode JWT headers and claims with automatic extraction of `alg`, `iat`, `nbf`, and `exp`
 - Verify signatures when a key is supplied (supports HS*, RS*, PS*, ES*, and EdDSA keys in PEM or DER form)
 - Go-powered verification logic exposed to a Next.js/React UI via Wails v2
+- Bilingual (Japanese/English) frontend text with automatic locale detection and a language switcher in the UI
 
 ## Prerequisites
 - macOS + zsh (adjust shell configuration steps if you use another shell)
@@ -144,6 +145,7 @@ cd ..
 ## 5. Common commands
 - Development mode: `wails dev`
 - Production build: `wails build` (outputs binaries under `build/bin/`)
+- Frontend linting: `cd frontend && pnpm run lint`
 - Frontend-only dev server (if needed): `cd frontend && pnpm run dev`
 - Update Go dependencies: `go get -u ./... && go mod tidy`
 
