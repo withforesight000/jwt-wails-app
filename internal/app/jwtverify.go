@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -35,12 +34,12 @@ type JWTResult struct {
 func (a *App) VerifyAndDecodeJWT(tokenString string, keyBytes []byte) (*JWTResult, error) {
 	res := &JWTResult{}
 	if strings.TrimSpace(tokenString) == "" {
-		return nil, errors.New("empty token")
+		return nil, backendError(codeEmptyToken)
 	}
 
 	parts := strings.Split(tokenString, ".")
 	if len(parts) != 3 {
-		return nil, errors.New("token must have 3 parts")
+		return nil, backendError(codeTokenMustHave3Parts)
 	}
 	res.Signature = parts[2]
 
@@ -48,7 +47,7 @@ func (a *App) VerifyAndDecodeJWT(tokenString string, keyBytes []byte) (*JWTResul
 	unver := jwt.MapClaims{}
 	tok, _, err := parser.ParseUnverified(tokenString, unver)
 	if err != nil {
-		return nil, fmt.Errorf("parse (unverified): %w", err)
+		return nil, backendError(codeParseUnverified)
 	}
 	res.Header = tok.Header
 	if alg, ok := tok.Header["alg"].(string); ok {
@@ -62,13 +61,13 @@ func (a *App) VerifyAndDecodeJWT(tokenString string, keyBytes []byte) (*JWTResul
 	// 鍵未指定ならデコードのみ
 	if len(keyBytes) == 0 {
 		res.Valid = false
-		res.Warnings = append(res.Warnings, "鍵が指定されていないため署名は検証されていません")
+		res.Warnings = append(res.Warnings, codeNoKeyWarning)
 		return res, nil
 	}
 
 	alg := res.Algorithm
 	if alg == "" {
-		res.Error = "alg ヘッダが見つかりません"
+		res.Error = codeMissingAlgHeader
 		return res, nil
 	}
 
@@ -81,13 +80,22 @@ func (a *App) VerifyAndDecodeJWT(tokenString string, keyBytes []byte) (*JWTResul
 	claims := jwt.MapClaims{}
 	parsed, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		if t.Method.Alg() != alg {
-			return nil, fmt.Errorf("alg mismatch: token=%s key=%s", t.Method.Alg(), alg)
+			return nil, backendError(codeAlgMismatch)
 		}
 		return key, nil
 	}, jwt.WithLeeway(2*time.Second))
 	if err != nil {
 		res.Valid = false
-		res.Error = err.Error()
+		switch {
+		case strings.Contains(err.Error(), codeAlgMismatch):
+			res.Error = codeAlgMismatch
+		default:
+			if code := codeForJWTError(err); code != "" {
+				res.Error = code
+			} else {
+				res.Error = err.Error()
+			}
+		}
 	} else {
 		res.Valid = parsed.Valid
 	}
@@ -133,7 +141,7 @@ func selectKeyForAlg(alg string, keyBytes []byte) (any, error) {
 	case alg == "EdDSA": // Ed25519
 		return parseEd25519PubOrPrivPEMOrDER(keyBytes)
 	default:
-		return nil, fmt.Errorf("unsupported alg: %s", alg)
+		return nil, backendError(codeUnsupportedAlg)
 	}
 }
 
@@ -146,7 +154,7 @@ func parseRSAPubOrPrivPEMOrDER(b []byte) (any, error) {
 	if k, err := parseRSADER(b); err == nil {
 		return k, nil
 	}
-	return nil, errors.New("RSA 鍵を解析できません (PEM/DER)")
+	return nil, backendError(codeRSAKeyParseFailed)
 }
 
 func parseRSAPEM(b []byte) (any, error) {
@@ -158,44 +166,44 @@ func parseRSAPEM(b []byte) (any, error) {
 	case "PUBLIC KEY": // SubjectPublicKeyInfo (SPKI)
 		pub, err := x509.ParsePKIXPublicKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeRSAPEMBlockParseFailed)
 		}
 		if rsaPub, ok := pub.(*rsa.PublicKey); ok {
 			return rsaPub, nil
 		}
-		return nil, errors.New("RSA 公開鍵ではありません")
+		return nil, backendError(codeRSANotPublicKey)
 	case "RSA PUBLIC KEY": // PKCS#1 public
 		pub, err := x509.ParsePKCS1PublicKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeRSAPEMBlockParseFailed)
 		}
 		return pub, nil
 	case "CERTIFICATE": // X.509 cert
 		cert, err := x509.ParseCertificate(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeRSAPEMBlockParseFailed)
 		}
 		if rsaPub, ok := cert.PublicKey.(*rsa.PublicKey); ok {
 			return rsaPub, nil
 		}
-		return nil, errors.New("証明書に RSA 公開鍵が含まれていません")
+		return nil, backendError(codeRSACertMissingPublicKey)
 	case "PRIVATE KEY": // PKCS#8 private
 		priv, err := x509.ParsePKCS8PrivateKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeRSAPEMBlockParseFailed)
 		}
 		if rsaPriv, ok := priv.(*rsa.PrivateKey); ok {
 			return rsaPriv.Public(), nil
 		}
-		return nil, errors.New("PKCS#8 が RSA ではありません")
+		return nil, backendError(codeRSAPKCS8NotRSA)
 	case "RSA PRIVATE KEY": // PKCS#1 private
 		priv, err := x509.ParsePKCS1PrivateKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeRSAPEMBlockParseFailed)
 		}
 		return priv.Public(), nil
 	default:
-		return nil, fmt.Errorf("未知の PEM タイプ: %s", blk.Type)
+		return nil, backendError(codeRSAUnknownPEMType)
 	}
 }
 
@@ -222,7 +230,7 @@ func parseRSADER(der []byte) (any, error) {
 	if priv1, err := x509.ParsePKCS1PrivateKey(der); err == nil {
 		return priv1.Public(), nil
 	}
-	return nil, errors.New("RSA DER を解釈できません")
+	return nil, backendError(codeRSADERUnparseable)
 }
 
 // ===== ECDSA: PUBLIC/PRIVATE/CERT (PEM or DER) =====
@@ -233,7 +241,7 @@ func parseECDSAPubOrPrivPEMOrDER(b []byte) (any, error) {
 	if k, err := parseECDSADER(b); err == nil {
 		return k, nil
 	}
-	return nil, errors.New("ECDSA 鍵を解析できません (PEM/DER)")
+	return nil, backendError(codeECDSAKeyParseFailed)
 }
 
 func parseECDSAPEM(b []byte) (any, error) {
@@ -245,38 +253,38 @@ func parseECDSAPEM(b []byte) (any, error) {
 	case "PUBLIC KEY": // SPKI
 		pub, err := x509.ParsePKIXPublicKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeECDSAPEMBlockParseFailed)
 		}
 		if ecdsaPub, ok := pub.(*ecdsa.PublicKey); ok {
 			return ecdsaPub, nil
 		}
-		return nil, errors.New("ECDSA 公開鍵ではありません")
+		return nil, backendError(codeECDSANotPublicKey)
 	case "CERTIFICATE":
 		cert, err := x509.ParseCertificate(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeECDSAPEMBlockParseFailed)
 		}
 		if ecdsaPub, ok := cert.PublicKey.(*ecdsa.PublicKey); ok {
 			return ecdsaPub, nil
 		}
-		return nil, errors.New("証明書に ECDSA 公開鍵が含まれていません")
+		return nil, backendError(codeECDSACertMissingPublicKey)
 	case "EC PRIVATE KEY": // SEC1
 		priv, err := x509.ParseECPrivateKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeECDSAPEMBlockParseFailed)
 		}
 		return &priv.PublicKey, nil
 	case "PRIVATE KEY": // PKCS#8
 		priv, err := x509.ParsePKCS8PrivateKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeECDSAPEMBlockParseFailed)
 		}
 		if ecdsaPriv, ok := priv.(*ecdsa.PrivateKey); ok {
 			return &ecdsaPriv.PublicKey, nil
 		}
-		return nil, errors.New("PKCS#8 が ECDSA ではありません")
+		return nil, backendError(codeECDSAPKCS8NotECDSA)
 	default:
-		return nil, fmt.Errorf("未知の PEM タイプ: %s", blk.Type)
+		return nil, backendError(codeECDSAUnknownPEMType)
 	}
 }
 
@@ -300,7 +308,7 @@ func parseECDSADER(der []byte) (any, error) {
 	if ecPriv, err := x509.ParseECPrivateKey(der); err == nil {
 		return &ecPriv.PublicKey, nil
 	}
-	return nil, errors.New("ECDSA DER を解釈できません")
+	return nil, backendError(codeECDSADERUnparseable)
 }
 
 // ===== Ed25519: PUBLIC/PRIVATE/CERT (PEM or DER) =====
@@ -311,7 +319,7 @@ func parseEd25519PubOrPrivPEMOrDER(b []byte) (any, error) {
 	if k, err := parseEd25519DER(b); err == nil {
 		return k, nil
 	}
-	return nil, errors.New("Ed25519 鍵を解析できません (PEM/DER)")
+	return nil, backendError(codeEd25519KeyParseFailed)
 }
 
 func parseEd25519PEM(b []byte) (any, error) {
@@ -323,32 +331,32 @@ func parseEd25519PEM(b []byte) (any, error) {
 	case "PUBLIC KEY": // SPKI
 		pub, err := x509.ParsePKIXPublicKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeEd25519PEMBlockParseFailed)
 		}
 		if edPub, ok := pub.(ed25519.PublicKey); ok {
 			return edPub, nil
 		}
-		return nil, errors.New("Ed25519 公開鍵ではありません")
+		return nil, backendError(codeEd25519NotPublicKey)
 	case "CERTIFICATE":
 		cert, err := x509.ParseCertificate(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeEd25519PEMBlockParseFailed)
 		}
 		if edPub, ok := cert.PublicKey.(ed25519.PublicKey); ok {
 			return edPub, nil
 		}
-		return nil, errors.New("証明書に Ed25519 公開鍵が含まれていません")
+		return nil, backendError(codeEd25519CertMissingPublicKey)
 	case "PRIVATE KEY": // PKCS#8
 		priv, err := x509.ParsePKCS8PrivateKey(blk.Bytes)
 		if err != nil {
-			return nil, err
+			return nil, backendError(codeEd25519PEMBlockParseFailed)
 		}
 		if edPriv, ok := priv.(ed25519.PrivateKey); ok {
 			return edPriv.Public(), nil
 		}
-		return nil, errors.New("PKCS#8 が Ed25519 ではありません")
+		return nil, backendError(codeEd25519PKCS8NotEd25519)
 	default:
-		return nil, fmt.Errorf("未知の PEM タイプ: %s", blk.Type)
+		return nil, backendError(codeEd25519UnknownPEMType)
 	}
 }
 
@@ -369,5 +377,5 @@ func parseEd25519DER(der []byte) (any, error) {
 			return edPriv.Public(), nil
 		}
 	}
-	return nil, errors.New("Ed25519 DER を解釈できません")
+	return nil, backendError(codeEd25519DERUnparseable)
 }

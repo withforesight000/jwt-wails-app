@@ -28,7 +28,7 @@ func TestVerifyAndDecodeJWT_EmptyToken(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for empty token")
 	}
-	if !strings.Contains(err.Error(), "empty token") {
+	if err.Error() != codeEmptyToken {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -48,7 +48,7 @@ func TestVerifyAndDecodeJWT_NoKey(t *testing.T) {
 	if res.Valid {
 		t.Fatalf("expected valid=false when key is missing")
 	}
-	if len(res.Warnings) == 0 || res.Warnings[0] != "鍵が指定されていないため署名は検証されていません" {
+	if len(res.Warnings) == 0 || res.Warnings[0] != codeNoKeyWarning {
 		t.Fatalf("missing warning: %v", res.Warnings)
 	}
 	parts := strings.Split(token, ".")
@@ -73,7 +73,7 @@ func TestVerifyAndDecodeJWT_InvalidStructure(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected structure error")
 	}
-	if !strings.Contains(err.Error(), "token must have 3 parts") {
+	if err.Error() != codeTokenMustHave3Parts {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -83,8 +83,11 @@ func TestVerifyAndDecodeJWT_MissingAlgHeader(t *testing.T) {
 	token := makeManualToken(map[string]any{"typ": "JWT"}, map[string]any{"foo": "bar"}, "sig")
 
 	_, err := app.VerifyAndDecodeJWT(token, []byte("key"))
-	if err == nil || !strings.Contains(err.Error(), "signing method") {
-		t.Fatalf("expected parser error for missing alg, got: %v", err)
+	if err == nil {
+		t.Fatal("expected parse error for missing alg")
+	}
+	if err.Error() != codeParseUnverified {
+		t.Fatalf("expected parse_unverified code, got: %v", err)
 	}
 }
 
@@ -94,8 +97,11 @@ func TestVerifyAndDecodeJWT_UnsupportedAlg(t *testing.T) {
 	token := makeManualToken(headers, map[string]any{"foo": "bar"}, "bare")
 
 	_, err := app.VerifyAndDecodeJWT(token, []byte("key"))
-	if err == nil || !strings.Contains(err.Error(), "signing method") {
-		t.Fatalf("expected parser error for unsupported alg, got: %v", err)
+	if err == nil {
+		t.Fatal("expected parse error for unsupported alg")
+	}
+	if err.Error() != codeParseUnverified {
+		t.Fatalf("expected parse_unverified code, got: %v", err)
 	}
 }
 
@@ -104,6 +110,9 @@ func TestVerifyAndDecodeJWT_InvalidBase64(t *testing.T) {
 	_, err := app.VerifyAndDecodeJWT("!!?.!!?.!!?", []byte("key"))
 	if err == nil {
 		t.Fatal("expected parse error")
+	}
+	if err.Error() != codeParseUnverified {
+		t.Fatalf("unexpected error code: %v", err)
 	}
 }
 
@@ -192,8 +201,8 @@ func TestVerifyAndDecodeJWT_InvalidRSAKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if res.Error == "" || !strings.Contains(res.Error, "RSA 鍵") {
-		t.Fatalf("expected RSA key parse error, got: %v", res.Error)
+	if res.Error != codeRSAKeyParseFailed {
+		t.Fatalf("expected RSA key parse code, got: %v", res.Error)
 	}
 }
 
@@ -220,8 +229,8 @@ func TestVerifyAndDecodeJWT_RS256SignatureMismatch(t *testing.T) {
 	if res.Valid {
 		t.Fatalf("expected signature verification to fail")
 	}
-	if res.Error == "" {
-		t.Fatalf("expected error detail on signature mismatch")
+	if res.Error != codeTokenSignatureInvalid {
+		t.Fatalf("expected signature mismatch code, got: %v", res.Error)
 	}
 }
 

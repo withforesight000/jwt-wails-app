@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X, File as FileIcon } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { translateBackendMessage } from '@/lib/i18n/backend';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 // Helper functions
@@ -200,7 +201,11 @@ export default function Page() {
                 >
                   {t('input.clear.button')}
                 </Button>
-                {state.error && <div className="ml-2 text-sm text-red-500">{state.error}</div>}
+                {state.error && (
+                  <div className="ml-2 text-sm text-red-500">
+                    {translateBackendMessage(t, state.error)}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -272,11 +277,15 @@ export default function Page() {
                 {state.result.algorithm && (
                   <div>alg: <span className="font-mono">{state.result.algorithm}</span></div>
                 )}
-                {state.result.error && <div className="text-red-600">{t('result.error')}: {state.result.error}</div>}
+                {state.result.error && (
+                  <div className="text-red-600">
+                    {t('result.error')}: {translateBackendMessage(t, state.result.error)}
+                  </div>
+                )}
                 {Array.isArray(state.result.warnings) && state.result.warnings.length > 0 && (
                   <ul className="list-disc ml-5 text-amber-600">
                     {state.result.warnings.map((w: string, i: number) => (
-                      <li key={i}>{w}</li>
+                      <li key={i}>{translateBackendMessage(t, w)}</li>
                     ))}
                   </ul>
                 )}

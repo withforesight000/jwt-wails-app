@@ -13,7 +13,7 @@
   - Verifies the signature when a key is supplied and returns a `JWTResult`.
 - Frontend: `frontend/app/page.tsx` calls `VerifyAndDecodeJWT` via `frontend/wailsjs/go/app/App`.
 - Dev-only HMR workaround: `frontend/app/layout.tsx` injects `frontend/public/wails-v2-hmr-socket-rewrite.js` to rewrite the Next.js HMR WebSocket to `ws://localhost:3000` when the app is running inside the Wails v2 custom-scheme webview. See `doc/wails-v2-hmr-workaround.md` for rationale and guardrails.
-- E2E tests stub the Wails runtime by injecting `window.go.app.App.VerifyAndDecodeJWT`.
+- E2E tests stub the Wails runtime by injecting `window.go.app.App.VerifyAndDecodeJWT`; shared test-only window typings live in `frontend/tests/e2e/global.d.ts`.
 
 ## Key handling rules (backend)
 - HS* uses raw bytes (shared secret).
@@ -44,11 +44,14 @@
 - `go test ./...`
 - `pnpm -C frontend run build`
 - `pnpm -C frontend run test:e2e`
-- `pnpm -C frontend run lint`
+- `pnpm -C frontend run lint` (ESLint + TypeScript type-check; this is where frontend type mismatches should be caught)
+- `golangci-lint run ./...` (backend lint; keep it aligned with `.golangci.yml`)
 
 ## Change guidance
 - Keep `JWTResult` fields and JSON tags stable; `frontend/wailsjs` models are generated from Go types.
 - Do not hand-edit `frontend/wailsjs`; regenerate via `wails dev` or `wails build` if needed.
+- If frontend tests need browser-only globals, add the declaration under `frontend/tests/e2e/global.d.ts` instead of sprinkling `any` or per-test casts.
 - UI copy lives in `frontend/lib/i18n/translations.ts`; update both locales together and adjust E2E tests if labels change.
 - Frontend export goes to `frontend/out` (`frontend/next.config.mjs`); keep it in sync with `main.go` embedding.
 - When touching the Wails v2 HMR workaround, keep `doc/wails-v2-hmr-workaround.md`, `frontend/public/wails-v2-hmr-socket-rewrite.js`, and `wails.json` aligned.
+- When adding Go code, keep `golangci-lint` clean; prefer removing dead helpers/parameters rather than suppressing `unused` warnings.
