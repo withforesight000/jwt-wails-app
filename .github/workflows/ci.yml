@@ -26,11 +26,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.25.5
+          go-version: 1.26.2
       - name: Set up Node.js for frontend build
         uses: actions/setup-node@v5
         with:
-          node-version: 24.12.0
+          node-version: 24.14.1
       - name: Enable pnpm via Corepack
         run: |
           corepack enable pnpm

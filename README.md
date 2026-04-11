@@ -12,8 +12,8 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 - macOS + zsh (adjust shell configuration steps if you use another shell)
 - [goenv](https://github.com/go-nv/goenv) for Go version management
 - [nodenv](https://github.com/nodenv/nodenv) for Node.js version management
-- Go 1.25.5 (matches `go.mod`)
-- Node.js 24.12.0
+- Go 1.26.2 (matches `go.mod`)
+- Node.js 24.14.1
 - Wails CLI v2
 - pnpm 10.15 (installed via Corepack or npm)
 
@@ -62,22 +62,22 @@ source ~/.zshrc
 
 ```text
 # .go-version
-1.25.5
+1.26.2
 
 # .node-version
-24.12.0
+24.14.1
 ```
 
 Install and activate the toolchains:
 
 ```bash
 # Go
-goenv install 1.25.5
-goenv global 1.25.5
+goenv install 1.26.2
+goenv global 1.26.2
 
 # Node.js
-nodenv install 24.12.0
-nodenv global 24.12.0
+nodenv install 24.14.1
+nodenv global 24.14.1
 nodenv rehash
 ```
 
@@ -151,7 +151,7 @@ cd ..
 
 ## 6. Troubleshooting
 - Run `wails doctor` to diagnose environment issues.
-- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.12.0.
+- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.14.1.
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
 - Ensure `.go-version`, `.node-version`, and the values in this README stay in sync after upgrades.
 - `wails dev` uses a frontend-side WebSocket rewrite so Next.js HMR connects back to `ws://localhost:3000` even though the Wails v2 webview is not served from a normal `http(s)` origin. See `doc/wails-v2-hmr-workaround.md` for the design notes and maintenance guardrails.
