@@ -27,11 +27,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 1.26.2
-      - name: Run Go linting
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: latest
-          args: --timeout=5m ./...
       - name: Set up Node.js for frontend build
         uses: actions/setup-node@v5
         with:
@@ -46,6 +41,11 @@ jobs:
       - name: Build frontend assets
         run: pnpm run build
         working-directory: frontend
+      - name: Run Go linting
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          args: --timeout=5m ./...
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium
         working-directory: frontend

@@ -146,7 +146,7 @@ cd ..
 - Development mode: `wails dev`
 - Production build: `wails build` (outputs binaries under `build/bin/`)
 - Frontend linting: `cd frontend && pnpm run lint` (ESLint + TypeScript type-check)
-- Backend linting: `golangci-lint run ./...`
+- Backend linting: `cd frontend && pnpm run build && cd .. && golangci-lint run ./...`
 - Frontend-only dev server (if needed): `cd frontend && pnpm run dev`
 - Update Go dependencies: `go get -u ./... && go mod tidy`
 
@@ -154,12 +154,13 @@ cd ..
 - Run `wails doctor` to diagnose environment issues.
 - If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.14.1.
 - If `golangci-lint` is not installed, use `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest` or your preferred package manager.
+- Go tests and Go lint depend on the generated `frontend/out` tree; build the frontend first with `cd frontend && pnpm run build` or use `wails build`.
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
 - Ensure `.go-version`, `.node-version`, and the values in this README stay in sync after upgrades.
 - `wails dev` uses a frontend-side WebSocket rewrite so Next.js HMR connects back to `ws://localhost:3000` even though the Wails v2 webview is not served from a normal `http(s)` origin. See `doc/wails-v2-hmr-workaround.md` for the design notes and maintenance guardrails.
 
 ## Testing
-- **Go unit tests:** `go test ./...`
-- **Backend lint:** `golangci-lint run ./...`
+- **Go unit tests:** `cd frontend && pnpm run build && cd .. && go test ./...`
+- **Backend lint:** `cd frontend && pnpm run build && cd .. && golangci-lint run ./...`
 - **Frontend lint:** `cd frontend && pnpm run lint`
 - **Frontend E2E (Playwright):** `cd frontend && pnpm run test:e2e` — this spins up the Next dev server and runs Playwright tests that mock the Wails runtime to exercise the JWT Inspector UI.
