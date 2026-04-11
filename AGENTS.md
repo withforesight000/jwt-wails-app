@@ -12,6 +12,7 @@
   - Extracts `iat/nbf/exp` as Unix seconds.
   - Verifies the signature when a key is supplied and returns a `JWTResult`.
 - Frontend: `frontend/app/page.tsx` calls `VerifyAndDecodeJWT` via `frontend/wailsjs/go/app/App`.
+- Dev-only HMR workaround: `frontend/app/layout.tsx` injects `frontend/public/wails-v2-hmr-socket-rewrite.js` to rewrite the Next.js HMR WebSocket to `ws://localhost:3000` when the app is running inside the Wails v2 custom-scheme webview. See `doc/wails-v2-hmr-workaround.md` for rationale and guardrails.
 - E2E tests stub the Wails runtime by injecting `window.go.app.App.VerifyAndDecodeJWT`.
 
 ## Key handling rules (backend)
@@ -28,6 +29,7 @@
 - `frontend/components/`: UI components (shadcn-style).
 - `frontend/wailsjs/`: generated Wails bindings (do not edit by hand).
 - `frontend/tests/e2e/`: Playwright tests and JWT key fixtures.
+- `doc/wails-v2-hmr-workaround.md`: detailed notes for the Wails v2 HMR WebSocket rewrite.
 - `.github/workflows/ci.yml`: CI (Go tests, frontend build, Playwright, lint).
 
 ## Tooling & versions
@@ -49,3 +51,4 @@
 - Do not hand-edit `frontend/wailsjs`; regenerate via `wails dev` or `wails build` if needed.
 - UI copy lives in `frontend/lib/i18n/translations.ts`; update both locales together and adjust E2E tests if labels change.
 - Frontend export goes to `frontend/out` (`frontend/next.config.mjs`); keep it in sync with `main.go` embedding.
+- When touching the Wails v2 HMR workaround, keep `doc/wails-v2-hmr-workaround.md`, `frontend/public/wails-v2-hmr-socket-rewrite.js`, and `wails.json` aligned.
