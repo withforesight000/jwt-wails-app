@@ -35,8 +35,7 @@
 ## Tooling & versions
 - Project tools are pinned in `mise.toml`; run `mise install` and use `mise exec -- <command>` without shell activation. Keep compatibility version files, `go.mod`, frontend `packageManager`, CI, and README aligned.
 - Go 1.27.2
-- Node.js 24.21.0
-- pnpm 12.11.2
+- Bun 1.4.3 (package manager and frontend runtime; Node.js/npm/pnpm are not required)
 - Wails CLI 2.16.0 and golangci-lint 2.14.0
 - Wails v2, Next.js 16, React 19, Tailwind CSS 4
 
@@ -44,16 +43,17 @@
 - `wails dev` (desktop dev)
 - `wails build` (desktop build, outputs to `build/bin/`)
 - `go test ./...`
-- `pnpm -C frontend run build`
-- `pnpm -C frontend run test:e2e`
-- `pnpm -C frontend run lint` (Biome + TypeScript type-check; this is where frontend type mismatches should be caught)
-- `golangci-lint run ./...` after `pnpm -C frontend run build` (backend lint; keep it aligned with `.golangci.yml` and the generated `frontend/out` tree)
+- `bun run --cwd frontend build`
+- `bun run --cwd frontend test:e2e`
+- `bun run --cwd frontend lint` (Biome + TypeScript type-check; this is where frontend type mismatches should be caught)
+- `golangci-lint run ./...` after `bun run --cwd frontend build` (backend lint; keep it aligned with `.golangci.yml` and the generated `frontend/out` tree)
 
 ## Change guidance
 - Keep `JWTResult` fields and JSON tags stable; `frontend/wailsjs` models are generated from Go types.
 - Do not hand-edit `frontend/wailsjs`; regenerate via `wails dev` or `wails build` if needed.
 - If frontend tests need browser-only globals, add the declaration under `frontend/tests/e2e/global.d.ts` instead of sprinkling `any` or per-test casts.
-- Go tests and backend lint expect `frontend/out` to exist, so run `pnpm -C frontend run build` first when working from a clean checkout.
+- Go tests and backend lint expect `frontend/out` to exist, so run `bun run --cwd frontend build` first when working from a clean checkout.
+- Commit `frontend/bun.lock`, use frozen installs, and keep `frontend/bunfig.toml` and `packageManager` aligned with mise/CI. Dependency scripts are disabled through `trustedDependencies: []`; do not enable them implicitly. CI frontend checks use `scripts/without-node.sh`.
 - Frontend lint uses `frontend/biome.json`; keep generated Wails bindings and build output excluded, and retain the TypeScript check in the lint script.
 - UI copy lives in `frontend/lib/i18n/translations.ts`; update both locales together and adjust E2E tests if labels change.
 - Frontend export goes to `frontend/out` (`frontend/next.config.mjs`); keep it in sync with `main.go` embedding.

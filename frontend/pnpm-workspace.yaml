@@ -1,3 +1,0 @@
-# Next.js uses sharp's optional prebuilt binaries; no install script is needed.
-allowBuilds:
-  sharp: false

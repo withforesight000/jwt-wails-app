@@ -11,7 +11,7 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 ## Prerequisites
 - macOS 13 Ventura or later + zsh (Go 1.27 requires macOS 13+; adjust shell configuration steps if you use another shell)
 - [mise](https://mise.jdx.dev/) for project tool management
-- Go 1.27.2, Node.js 24.21.0, pnpm 12.11.2, Wails CLI 2.16.0, and golangci-lint 2.14.0 (installed by mise)
+- Go 1.27.2, Bun 1.4.3, Wails CLI 2.16.0, and golangci-lint 2.14.0 (installed by mise)
 
 ## Table of Contents
 1. Install mise
@@ -44,14 +44,13 @@ mise trust
 mise install
 ```
 
-`mise.toml` defines the project tool versions. `.go-version` and `.node-version` are retained for compatibility with other version managers; keep them synchronized with `mise.toml`. Go's minimum version in `go.mod`, pnpm's `packageManager` in `frontend/package.json`, and CI versions should also stay aligned.
+`mise.toml` defines the project tool versions. `.go-version` is retained for compatibility with other version managers; keep it synchronized with `mise.toml`. Go's minimum version in `go.mod`, Bun's `packageManager` in `frontend/package.json`, and CI versions should also stay aligned.
 
 Check the active versions:
 
 ```bash
 mise exec -- go version
-mise exec -- node --version
-mise exec -- pnpm --version
+mise exec -- bun --version
 mise exec -- wails version
 mise exec -- golangci-lint version
 mise exec -- wails doctor
@@ -75,43 +74,50 @@ Install backend dependencies:
 go mod download
 ```
 
-Install frontend dependencies (pnpm is defined in `frontend/package.json` and `wails.json`):
+Install frontend dependencies (Bun is defined in `frontend/package.json` and `wails.json`):
 
 ```bash
 cd frontend
-pnpm install
+bun install --frozen-lockfile
 cd ..
 ```
 
-> The Wails CLI also runs `pnpm install` automatically via `frontend:install`, but running it once manually ensures the lockfile is respected before your first build.
+> The Wails CLI also runs `bun install --frozen-lockfile` automatically via `frontend:install`, but running it once manually ensures the lockfile is respected before your first build.
 
 ## 4. Common commands
 - Development mode: `wails dev`
 - Production build: `wails build` (outputs binaries under `build/bin/`)
-- Frontend linting: `cd frontend && pnpm run lint` (Biome + TypeScript type-check)
-- Backend linting: `cd frontend && pnpm run build && cd .. && golangci-lint run ./...`
-- Frontend-only dev server (if needed): `cd frontend && pnpm run dev`
+- Frontend linting: `cd frontend && bun run lint` (Biome + TypeScript type-check)
+- Backend linting: `cd frontend && bun run build && cd .. && golangci-lint run ./...`
+- Frontend-only dev server (if needed): `cd frontend && bun run dev`
 - Update Go dependencies: `go get -u ./... && go mod tidy`
 
 ## 5. Troubleshooting
-- Run `wails doctor` to diagnose environment issues.
+- Run `wails doctor` to diagnose environment issues. Wails v2 still reports Node.js/npm as required when they are absent; this diagnostic does not reflect this project's Bun commands. Node.js/npm are not needed for the configured build/dev workflow. Check other reported native platform dependencies normally.
 - If a tool is missing or has the wrong version, run `mise install` and check `mise ls --current`; use `mise exec -- <command>` to select the project tools explicitly.
-- Go tests and Go lint depend on the generated `frontend/out` tree; build the frontend first with `cd frontend && pnpm run build` or use `wails build`.
+- Go tests and Go lint depend on the generated `frontend/out` tree; build the frontend first with `cd frontend && bun run build` or use `wails build`.
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
-- Keep `mise.toml`, `.go-version`, `.node-version`, `go.mod`, `frontend/package.json`, CI, and this README synchronized after tool upgrades.
+- Keep `mise.toml`, `.go-version`, `go.mod`, `frontend/package.json`, CI, and this README synchronized after tool upgrades.
 - `wails dev` uses a frontend-side WebSocket rewrite so Next.js HMR connects back to `ws://localhost:3000` even though the Wails v2 webview is not served from a normal `http(s)` origin. See [the HMR guide](doc/wails-v2-hmr-workaround.md) for the upgrade checklist and troubleshooting steps when the native window stops responding or updating.
 
 ## Frontend linting
-`pnpm -C frontend run lint` runs Biome 2.5.15 and TypeScript's type checker. CI uses the same command. Biome is installed as a frontend development dependency through the mise-managed pnpm.
+`bun run --cwd frontend lint` runs Biome 2.5.15 and TypeScript's type checker. CI uses the same command. Biome is installed as a frontend development dependency through the mise-managed Bun.
 
 `frontend/biome.json` enables the recommended checks and React/Next.js domains, plus rules migrated from the previous ESLint setup. Generated Wails bindings, Next.js output, browser-test reports, and `next-env.d.ts` are excluded. Formatting is not part of the lint command, so the migration preserves the existing source formatting.
 
-`frontend/pnpm-workspace.yaml` explicitly skips the sharp install script; the build uses its optional prebuilt binaries. Other unreviewed dependency scripts still require an explicit decision during installation.
+`frontend/bun.lock` is committed and installations use `--frozen-lockfile`. `frontend/bunfig.toml` selects isolated dependencies, a 24-hour minimum release age for new resolutions, and the Bun runtime for scripts. `trustedDependencies: []` in `frontend/package.json` disables dependency lifecycle scripts, including Bun's default allowlist; native packages such as sharp use their optional prebuilt binaries. Review any future script permission explicitly.
 
 The tools do not have identical rule coverage: React Compiler checks such as `react-hooks/set-state-in-effect`, `react-hooks/purity`, and `react-hooks/immutability`, along with some Next.js-specific checks, have no Biome equivalent. TypeScript type checking remains mandatory but does not replace those rules.
 
 ## Testing
-- **Go unit tests:** `cd frontend && pnpm run build && cd .. && go test ./...`
-- **Backend lint:** `cd frontend && pnpm run build && cd .. && golangci-lint run ./...`
-- **Frontend lint:** `cd frontend && pnpm run lint`
-- **Frontend E2E (Playwright):** `cd frontend && pnpm run test:e2e` — this spins up the Next dev server and runs Playwright tests that mock the Wails runtime to exercise the JWT Inspector UI.
+- **Go unit tests:** `cd frontend && bun run build && cd .. && go test ./...`
+- **Backend lint:** `cd frontend && bun run build && cd .. && golangci-lint run ./...`
+- **Frontend lint:** `cd frontend && bun run lint`
+- **Frontend E2E (Playwright):** `cd frontend && bun run test:e2e` — this spins up the Next dev server and runs Playwright tests that mock the Wails runtime to exercise the JWT Inspector UI.
+
+## Bun runtime and CI
+Next.js, TypeScript, Biome, and Playwright run with Bun 1.4.3; no project Node.js or pnpm installation is required. `@types/node` remains for Node-compatible API declarations. CI uses `scripts/without-node.sh` to remove host Node.js/npm/pnpm/Corepack from the frontend PATH; Bun's temporary `node` alias executes Bun. GitHub Actions themselves may still use their own Node runtime.
+
+Playwright upstream does not continuously test Bun ([upstream discussion](https://github.com/microsoft/playwright/issues/38095)), so run the full E2E suite when upgrading either tool. The existing tests mock the Wails bridge; also check `wails dev` and its custom-scheme HMR after tooling changes.
+
+To update dependencies deliberately, run `cd frontend && bun update --latest`, review both the manifest and lockfile, and run build, lint, and E2E checks. For a lockfile-only change, run the frozen install manually or use `wails build -f`: Wails v2 caches installation based on the package manifest rather than the lockfile. When switching package managers or investigating stale Turbopack errors, remove frontend `node_modules`, `out`, and `.next` and reinstall from the appropriate lockfile.
