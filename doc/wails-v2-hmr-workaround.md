@@ -100,9 +100,9 @@ If that URL changes, update the WebSocket rewrite target too.
 Use this when touching the workaround:
 
 ```bash
-pnpm -C frontend run build
-pnpm -C frontend run lint
-pnpm -C frontend run test:e2e
+bun run --cwd frontend build
+bun run --cwd frontend lint
+bun run --cwd frontend test:e2e
 wails dev
 ```
 

@@ -3,9 +3,9 @@
   "name": "jwt-wails-app",
   "outputfilename": "JWTInspector",
   "frontend:dir": "frontend",
-  "frontend:install": "pnpm install",
-  "frontend:build": "pnpm run build",
-  "frontend:dev:install": "pnpm install",
-  "frontend:dev:watcher": "pnpm run dev",
+  "frontend:install": "bun install --frozen-lockfile",
+  "frontend:build": "bun run build",
+  "frontend:dev:install": "bun install --frozen-lockfile",
+  "frontend:dev:watcher": "bun run dev",
   "frontend:dev:serverUrl": "http://localhost:3000"
 }

@@ -13,33 +13,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Cache pnpm store
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - name: Cache Bun packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.pnpm-store
-            .pnpm-store
-            frontend/node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-bun-1.4.3-${{ hashFiles('frontend/bun.lock', 'frontend/bunfig.toml', 'frontend/package.json') }}
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: 1.27.2
-      - name: Set up Node.js for frontend build
-        uses: actions/setup-node@v5
-        with:
-          node-version: 24.21.0
-      - name: Enable pnpm via Corepack
-        run: |
-          corepack enable pnpm
-          corepack prepare pnpm@12.11.2 --activate
       - name: Install frontend dependencies
-        run: pnpm install
+        run: ../scripts/without-node.sh bun install --frozen-lockfile
         working-directory: frontend
       - name: Build frontend assets
-        run: pnpm run build
+        run: ../scripts/without-node.sh bun --bun run build
         working-directory: frontend
       - name: Run Go linting
         uses: golangci/golangci-lint-action@v9
@@ -47,13 +38,13 @@ jobs:
           version: v2.14.0
           args: --timeout=5m ./...
       - name: Install Playwright browsers
-        run: pnpm exec playwright install chromium
+        run: ../scripts/without-node.sh bun x --bun --no-install playwright install --with-deps chromium
         working-directory: frontend
       - name: Run unit tests
         run: go test -cover ./...
       - name: Run Playwright E2E tests
-        run: pnpm run test:e2e
+        run: ../scripts/without-node.sh bun --bun run test:e2e
         working-directory: frontend
       - name: Run frontend linting
-        run: pnpm run lint
+        run: ../scripts/without-node.sh bun --bun run lint
         working-directory: frontend
