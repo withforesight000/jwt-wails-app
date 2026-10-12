@@ -34,8 +34,8 @@
 
 ## Tooling & versions
 - Go 1.27.2
-- Node.js 24.14.1
-- pnpm 10.15.0
+- Node.js 24.21.0
+- pnpm 12.11.2
 - Wails CLI 2.16.0
 - Wails v2, Next.js 16, React 19, Tailwind CSS 4
 

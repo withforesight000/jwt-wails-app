@@ -30,11 +30,11 @@ jobs:
       - name: Set up Node.js for frontend build
         uses: actions/setup-node@v5
         with:
-          node-version: 24.14.1
+          node-version: 24.21.0
       - name: Enable pnpm via Corepack
         run: |
           corepack enable pnpm
-          corepack prepare pnpm@10.15.0 --activate
+          corepack prepare pnpm@12.11.2 --activate
       - name: Install frontend dependencies
         run: pnpm install
         working-directory: frontend

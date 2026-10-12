@@ -13,9 +13,9 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 - [goenv](https://github.com/go-nv/goenv) for Go version management
 - [nodenv](https://github.com/nodenv/nodenv) for Node.js version management
 - Go 1.27.2 (matches `go.mod`)
-- Node.js 24.14.1
+- Node.js 24.21.0
 - Wails CLI v2.16.0
-- pnpm 10.15 (installed via Corepack or npm)
+- pnpm 12.11.2 (installed via Corepack or npm)
 
 > Using goenv/nodenv is optional, but they keep local versions consistent with the project files.
 
@@ -65,7 +65,7 @@ source ~/.zshrc
 1.27.2
 
 # .node-version
-24.14.1
+24.21.0
 ```
 
 Install and activate the toolchains:
@@ -76,8 +76,8 @@ goenv install 1.27.2
 goenv global 1.27.2
 
 # Node.js
-nodenv install 24.14.1
-nodenv global 24.14.1
+nodenv install 24.21.0
+nodenv global 24.21.0
 nodenv rehash
 ```
 
@@ -93,8 +93,8 @@ Enable pnpm via Corepack (preferred) or install it globally:
 
 ```bash
 corepack enable pnpm
-corepack prepare pnpm@10.15.0 --activate
-# or: npm install -g pnpm@10.15.0
+corepack prepare pnpm@12.11.2 --activate
+# or: npm install -g pnpm@12.11.2
 ```
 
 ## 3. Install the Wails CLI
@@ -152,7 +152,7 @@ cd ..
 
 ## 6. Troubleshooting
 - Run `wails doctor` to diagnose environment issues.
-- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.14.1.
+- If pnpm fails to install, confirm Corepack is enabled and you are using Node 24.21.0.
 - If `golangci-lint` is not installed, use `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest` or your preferred package manager.
 - Go tests and Go lint depend on the generated `frontend/out` tree; build the frontend first with `cd frontend && pnpm run build` or use `wails build`.
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
