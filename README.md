@@ -99,7 +99,7 @@ cd ..
 - Go tests and Go lint depend on the generated `frontend/out` tree; build the frontend first with `cd frontend && pnpm run build` or use `wails build`.
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
 - Keep `mise.toml`, `.go-version`, `.node-version`, `go.mod`, `frontend/package.json`, CI, and this README synchronized after tool upgrades.
-- `wails dev` uses a frontend-side WebSocket rewrite so Next.js HMR connects back to `ws://localhost:3000` even though the Wails v2 webview is not served from a normal `http(s)` origin. See `doc/wails-v2-hmr-workaround.md` for the design notes and maintenance guardrails.
+- `wails dev` uses a frontend-side WebSocket rewrite so Next.js HMR connects back to `ws://localhost:3000` even though the Wails v2 webview is not served from a normal `http(s)` origin. See [the HMR guide](doc/wails-v2-hmr-workaround.md) for the upgrade checklist and troubleshooting steps when the native window stops responding or updating.
 
 ## Frontend linting
 `pnpm -C frontend run lint` runs Biome 2.5.15 and TypeScript's type checker. CI uses the same command. Biome is installed as a frontend development dependency through the mise-managed pnpm.

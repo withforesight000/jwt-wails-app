@@ -57,5 +57,5 @@
 - Frontend lint uses `frontend/biome.json`; keep generated Wails bindings and build output excluded, and retain the TypeScript check in the lint script.
 - UI copy lives in `frontend/lib/i18n/translations.ts`; update both locales together and adjust E2E tests if labels change.
 - Frontend export goes to `frontend/out` (`frontend/next.config.mjs`); keep it in sync with `main.go` embedding.
-- When touching the Wails v2 HMR workaround, keep `doc/wails-v2-hmr-workaround.md`, `frontend/public/wails-v2-hmr-socket-rewrite.js`, and `wails.json` aligned.
+- When touching the Wails v2 HMR workaround, keep `doc/wails-v2-hmr-workaround.md`, `frontend/app/layout.tsx`, `frontend/next.config.mjs`, `frontend/public/wails-v2-hmr-socket-rewrite.js`, and `wails.json` aligned. After Next.js/React/Wails/runtime upgrades, follow the guide's upgrade checklist and record the native WebView smoke result; browser E2E alone does not validate the custom-scheme HMR flow.
 - When adding Go code, keep `golangci-lint` clean; prefer removing dead helpers/parameters rather than suppressing `unused` warnings.
