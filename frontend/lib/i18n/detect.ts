@@ -25,7 +25,7 @@ export function detectLocale(): Locale {
   // 2. Check navigator.language or navigator.languages
   try {
     const navLang = navigator.language;
-    if (navLang && navLang.startsWith('ja')) {
+    if (navLang?.startsWith('ja')) {
       return 'ja';
     }
 

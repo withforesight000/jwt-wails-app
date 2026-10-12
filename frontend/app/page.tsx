@@ -1,5 +1,6 @@
 'use client';
-import React, { useMemo, useRef, useReducer, useCallback } from 'react';
+import type React from 'react';
+import { useMemo, useRef, useReducer, useCallback } from 'react';
 import { VerifyAndDecodeJWT } from '@/wailsjs/go/app/App';
 import type { app } from '@/wailsjs/go/models';
 
@@ -28,7 +29,7 @@ function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes)) return '';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  return `${(bytes / (1024 ** i)).toFixed(1)} ${units[i]}`;
 }
 
 // State management types
@@ -284,8 +285,8 @@ export default function Page() {
                 )}
                 {Array.isArray(state.result.warnings) && state.result.warnings.length > 0 && (
                   <ul className="list-disc ml-5 text-amber-600">
-                    {state.result.warnings.map((w: string, i: number) => (
-                      <li key={i}>{translateBackendMessage(t, w)}</li>
+                    {state.result.warnings.map((w: string) => (
+                      <li key={w}>{translateBackendMessage(t, w)}</li>
                     ))}
                   </ul>
                 )}

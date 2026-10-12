@@ -33,9 +33,11 @@
 - `.github/workflows/ci.yml`: CI (Go tests, frontend build, Playwright, lint).
 
 ## Tooling & versions
-- Go 1.26.2
-- Node.js 24.14.1
-- pnpm 10.15.0
+- Project tools are pinned in `mise.toml`; run `mise install` and use `mise exec -- <command>` without shell activation. Keep compatibility version files, `go.mod`, frontend `packageManager`, CI, and README aligned.
+- Go 1.27.2
+- Node.js 24.21.0
+- pnpm 12.11.2
+- Wails CLI 2.16.0 and golangci-lint 2.14.0
 - Wails v2, Next.js 16, React 19, Tailwind CSS 4
 
 ## Dev & test commands
@@ -44,7 +46,7 @@
 - `go test ./...`
 - `pnpm -C frontend run build`
 - `pnpm -C frontend run test:e2e`
-- `pnpm -C frontend run lint` (ESLint + TypeScript type-check; this is where frontend type mismatches should be caught)
+- `pnpm -C frontend run lint` (Biome + TypeScript type-check; this is where frontend type mismatches should be caught)
 - `golangci-lint run ./...` after `pnpm -C frontend run build` (backend lint; keep it aligned with `.golangci.yml` and the generated `frontend/out` tree)
 
 ## Change guidance
@@ -52,7 +54,8 @@
 - Do not hand-edit `frontend/wailsjs`; regenerate via `wails dev` or `wails build` if needed.
 - If frontend tests need browser-only globals, add the declaration under `frontend/tests/e2e/global.d.ts` instead of sprinkling `any` or per-test casts.
 - Go tests and backend lint expect `frontend/out` to exist, so run `pnpm -C frontend run build` first when working from a clean checkout.
+- Frontend lint uses `frontend/biome.json`; keep generated Wails bindings and build output excluded, and retain the TypeScript check in the lint script.
 - UI copy lives in `frontend/lib/i18n/translations.ts`; update both locales together and adjust E2E tests if labels change.
 - Frontend export goes to `frontend/out` (`frontend/next.config.mjs`); keep it in sync with `main.go` embedding.
-- When touching the Wails v2 HMR workaround, keep `doc/wails-v2-hmr-workaround.md`, `frontend/public/wails-v2-hmr-socket-rewrite.js`, and `wails.json` aligned.
+- When touching the Wails v2 HMR workaround, keep `doc/wails-v2-hmr-workaround.md`, `frontend/app/layout.tsx`, `frontend/next.config.mjs`, `frontend/public/wails-v2-hmr-socket-rewrite.js`, and `wails.json` aligned. After Next.js/React/Wails/runtime upgrades, follow the guide's upgrade checklist and record the native WebView smoke result; browser E2E alone does not validate the custom-scheme HMR flow.
 - When adding Go code, keep `golangci-lint` clean; prefer removing dead helpers/parameters rather than suppressing `unused` warnings.

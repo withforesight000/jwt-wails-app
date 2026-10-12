@@ -18,5 +18,3 @@ declare global {
     ): Promise<app.JWTResult>;
   }
 }
-
-export {};

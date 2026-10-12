@@ -1,6 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import React, { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { I18nProvider } from '@/lib/i18n';
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         {shouldInjectV2HMRPatch && (
-          // eslint-disable-next-line @next/next/no-sync-scripts
+          // biome-ignore lint/performance/noSyncScripts: The Wails HMR rewrite must run before Next.js opens its WebSocket.
           <script
             src="/wails-v2-hmr-socket-rewrite.js"
             suppressHydrationWarning

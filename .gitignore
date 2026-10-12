@@ -10,6 +10,7 @@
 /frontend/test-results/
 
 # pnpm & lock files
+.pnpm-store/
 /frontend/pnpm-lock.yaml
 /frontend/yarn.lock
 /frontend/package-lock.json
