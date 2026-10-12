@@ -44,7 +44,7 @@ jobs:
       - name: Run Go linting
         uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.14.0
           args: --timeout=5m ./...
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium
