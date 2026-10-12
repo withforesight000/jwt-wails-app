@@ -33,10 +33,11 @@
 - `.github/workflows/ci.yml`: CI (Go tests, frontend build, Playwright, lint).
 
 ## Tooling & versions
+- Project tools are pinned in `mise.toml`; run `mise install` and use `mise exec -- <command>` without shell activation. Keep compatibility version files, `go.mod`, frontend `packageManager`, CI, and README aligned.
 - Go 1.27.2
 - Node.js 24.21.0
 - pnpm 12.11.2
-- Wails CLI 2.16.0
+- Wails CLI 2.16.0 and golangci-lint 2.14.0
 - Wails v2, Next.js 16, React 19, Tailwind CSS 4
 
 ## Dev & test commands
