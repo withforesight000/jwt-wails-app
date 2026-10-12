@@ -4,7 +4,7 @@
 
 This repository stays on **Wails v2** on the main branch, but still supports **Next.js HMR** during `wails dev`.
 
-The workaround is intentionally **frontend-only**. It does **not** patch the Wails runtime. Instead, it rewrites only the Next.js HMR WebSocket request so it connects directly to the local Next dev server.
+The workaround is intentionally **frontend-only**. It does **not** patch the Wails runtime. It rewrites the Next.js HMR WebSocket request so it connects directly to the local Next dev server and disables development HTML compression for Wails script injection.
 
 ## Why this exists
 
@@ -22,7 +22,7 @@ The result is:
 | --- | --- |
 | `frontend/app/layout.tsx` | Injects the dev-only patch script before the app loads |
 | `frontend/public/wails-v2-hmr-socket-rewrite.js` | Rewrites the HMR WebSocket URL at runtime |
-| `frontend/next.config.mjs` | Allows dev-server origins and pins the Turbopack root |
+| `frontend/next.config.mjs` | Allows dev-server origins, disables dev compression, and pins the Turbopack root |
 | `wails.json` | Defines the frontend dev server URL and port |
 
 ## How it works
@@ -44,15 +44,17 @@ The current implementation also avoids inline script content because the earlier
 
 ```text
 /_next/webpack-hmr
+/_next/hmr
 ```
 
 Those requests are redirected to:
 
 ```text
 ws://localhost:3000/_next/webpack-hmr
+ws://localhost:3000/_next/hmr
 ```
 
-Everything else is left untouched.
+Next.js 16.4 uses `/_next/hmr`; the older path remains supported. The query string is preserved. Everything else is left untouched.
 
 ### 3. Leave the rest of the app alone
 
@@ -68,7 +70,7 @@ That keeps the workaround small and reduces the chance of breaking other dev beh
 If you need to modify this workaround, keep these constraints intact:
 
 1. **Keep it dev-only.** The patch must not ship in production builds.
-2. **Do not broaden the rewrite.** Only `/_next/webpack-hmr` should be redirected.
+2. **Do not broaden the rewrite.** Only `/_next/webpack-hmr` and `/_next/hmr` should be redirected.
 3. **Keep the port in sync.** `frontend/public/wails-v2-hmr-socket-rewrite.js` and `wails.json` must agree on the Next dev server port.
 4. **Do not revert to inline script injection.** The inline `beforeInteractive` variant caused a hydration mismatch in dev.
 5. **Do not widen the Biome suppression.** The `noSyncScripts` suppression should stay on the single injected script only.
@@ -77,8 +79,9 @@ If you need to modify this workaround, keep these constraints intact:
 
 ### `frontend/next.config.mjs`
 
-Two settings are part of the workaround:
+Three settings are part of the workaround:
 
+- `compress`: disabled only in development because Wails rewrites HTML to inject runtime scripts; compressed upstream responses can otherwise retain a gzip header on an HTML body
 - `allowedDevOrigins`: lets the Next dev server accept the Wails-driven development origin flow
 - `turbopack.root`: keeps Turbopack resolution anchored to the frontend project root
 

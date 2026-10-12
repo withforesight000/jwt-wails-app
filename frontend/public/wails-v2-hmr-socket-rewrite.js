@@ -10,7 +10,10 @@
   function rewriteHMRUrl(url) {
     try {
       const parsed = new URL(String(url), window.location.href);
-      if (parsed.pathname !== '/_next/webpack-hmr') {
+      if (
+        parsed.pathname !== '/_next/webpack-hmr' &&
+        parsed.pathname !== '/_next/hmr'
+      ) {
         return url;
       }
       return hmrBaseUrl + parsed.pathname + parsed.search;
