@@ -33,9 +33,10 @@
 - `.github/workflows/ci.yml`: CI (Go tests, frontend build, Playwright, lint).
 
 ## Tooling & versions
-- Go 1.26.2
+- Go 1.27.2
 - Node.js 24.14.1
 - pnpm 10.15.0
+- Wails CLI 2.16.0
 - Wails v2, Next.js 16, React 19, Tailwind CSS 4
 
 ## Dev & test commands

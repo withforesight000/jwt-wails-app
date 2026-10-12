@@ -9,12 +9,12 @@ JWT Inspector desktop tool for decoding and validating JSON Web Tokens (JWT). En
 - Bilingual (Japanese/English) frontend text with automatic locale detection and a language switcher in the UI
 
 ## Prerequisites
-- macOS + zsh (adjust shell configuration steps if you use another shell)
+- macOS 13 Ventura or later + zsh (Go 1.27 requires macOS 13+) (adjust shell configuration steps if you use another shell)
 - [goenv](https://github.com/go-nv/goenv) for Go version management
 - [nodenv](https://github.com/nodenv/nodenv) for Node.js version management
-- Go 1.26.2 (matches `go.mod`)
+- Go 1.27.2 (matches `go.mod`)
 - Node.js 24.14.1
-- Wails CLI v2
+- Wails CLI v2.16.0
 - pnpm 10.15 (installed via Corepack or npm)
 
 > Using goenv/nodenv is optional, but they keep local versions consistent with the project files.
@@ -62,7 +62,7 @@ source ~/.zshrc
 
 ```text
 # .go-version
-1.26.2
+1.27.2
 
 # .node-version
 24.14.1
@@ -72,8 +72,8 @@ Install and activate the toolchains:
 
 ```bash
 # Go
-goenv install 1.26.2
-goenv global 1.26.2
+goenv install 1.27.2
+goenv global 1.27.2
 
 # Node.js
 nodenv install 24.14.1
@@ -101,7 +101,7 @@ corepack prepare pnpm@10.15.0 --activate
 Install Wails v2 using the configured Go environment.
 
 ```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
 ```
 
 Ensure the Go bin directory is on your `PATH` (add this to `~/.zshrc` if necessary):
