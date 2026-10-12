@@ -34,7 +34,7 @@ The result is:
 This script is loaded with a normal synchronous `<script>` tag on purpose:
 
 - it must run **before** the Next.js dev client captures `window.WebSocket`,
-- and the scope is limited to a single, documented exception to `@next/next/no-sync-scripts`.
+- and the scope is limited to a single, documented exception to `lint/performance/noSyncScripts`.
 
 The current implementation also avoids inline script content because the earlier inline approach caused a dev-time hydration mismatch.
 
@@ -71,7 +71,7 @@ If you need to modify this workaround, keep these constraints intact:
 2. **Do not broaden the rewrite.** Only `/_next/webpack-hmr` should be redirected.
 3. **Keep the port in sync.** `frontend/public/wails-v2-hmr-socket-rewrite.js` and `wails.json` must agree on the Next dev server port.
 4. **Do not revert to inline script injection.** The inline `beforeInteractive` variant caused a hydration mismatch in dev.
-5. **Do not widen the ESLint suppression.** The `no-sync-scripts` suppression should stay on the single injected script only.
+5. **Do not widen the Biome suppression.** The `noSyncScripts` suppression should stay on the single injected script only.
 
 ## Related configuration
 

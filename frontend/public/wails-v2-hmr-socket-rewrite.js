@@ -1,4 +1,4 @@
-(function () {
+(() => {
   const protocol = window.location.protocol;
   if (protocol === 'http:' || protocol === 'https:') {
     return;

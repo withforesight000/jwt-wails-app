@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import jwt from 'jsonwebtoken';
 import { expect, test } from '@playwright/test';

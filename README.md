@@ -145,7 +145,7 @@ cd ..
 ## 5. Common commands
 - Development mode: `wails dev`
 - Production build: `wails build` (outputs binaries under `build/bin/`)
-- Frontend linting: `cd frontend && pnpm run lint` (ESLint + TypeScript type-check)
+- Frontend linting: `cd frontend && pnpm run lint` (Biome + TypeScript type-check)
 - Backend linting: `cd frontend && pnpm run build && cd .. && golangci-lint run ./...`
 - Frontend-only dev server (if needed): `cd frontend && pnpm run dev`
 - Update Go dependencies: `go get -u ./... && go mod tidy`
@@ -158,6 +158,15 @@ cd ..
 - For Go module errors, try `go clean -modcache` followed by `go mod download`.
 - Ensure `.go-version`, `.node-version`, and the values in this README stay in sync after upgrades.
 - `wails dev` uses a frontend-side WebSocket rewrite so Next.js HMR connects back to `ws://localhost:3000` even though the Wails v2 webview is not served from a normal `http(s)` origin. See `doc/wails-v2-hmr-workaround.md` for the design notes and maintenance guardrails.
+
+## Frontend linting
+`pnpm -C frontend run lint` runs Biome 2.5.15 and TypeScript's type checker. CI uses the same command. Biome is installed as a frontend development dependency through the project's pnpm.
+
+`frontend/biome.json` enables the recommended checks and React/Next.js domains, plus rules migrated from the previous ESLint setup. Generated Wails bindings, Next.js output, browser-test reports, and `next-env.d.ts` are excluded. Formatting is not part of the lint command, so the migration preserves the existing source formatting.
+
+`frontend/pnpm-workspace.yaml` explicitly skips the sharp install script; the build uses its optional prebuilt binaries. Other unreviewed dependency scripts still require an explicit decision during installation.
+
+The tools do not have identical rule coverage: React Compiler checks such as `react-hooks/set-state-in-effect`, `react-hooks/purity`, and `react-hooks/immutability`, along with some Next.js-specific checks, have no Biome equivalent. TypeScript type checking remains mandatory but does not replace those rules.
 
 ## Testing
 - **Go unit tests:** `cd frontend && pnpm run build && cd .. && go test ./...`
